@@ -45,3 +45,21 @@
     cursor: default;
     opacity: 0.6;
 }
+
+.taggerator-chip.duplicate {
+    background: linear-gradient(
+        90deg,
+        var(--taggerator-dup-a, rgba(196, 45, 45, 0.3)),
+        var(--taggerator-dup-b, rgba(196, 45, 45, 0.14))
+    );
+    border-color: var(--taggerator-dup-border, rgba(206, 61, 61, 0.55));
+}
+
+.taggerator-chip.duplicate.dup-break {
+    background: linear-gradient(
+        90deg,
+        var(--taggerator-dupsoft-a, rgba(163, 63, 63, 0.18)),
+        var(--taggerator-dupsoft-b, rgba(163, 63, 63, 0.06))
+    );
+    border-color: var(--taggerator-dupsoft-border, rgba(172, 74, 74, 0.32));
+}

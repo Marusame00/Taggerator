@@ -172,6 +172,32 @@
         if (old) old.classList.remove("drag-over");
     }
 
+    // Strip weights and surrounding brackets so "(solo:1.2)", "solo" and
+    // "<lora:x:0.8>" can be compared for duplicates. Empty text is null.
+    function normalizeTagKey(part) {
+        var s = part.trim().toLowerCase();
+        if (s === "") return null;
+        s = s.replace(/:\d+(?:\.\d+)?/g, "");
+        s = s.replace(/^[({[<>]+|[)}\]>]+$/g, "");
+        return s;
+    }
+
+    function isBreakSeparated(parts, keys, key) {
+        var first = -1;
+        var last = -1;
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i] === key) {
+                if (first === -1) first = i;
+                last = i;
+            }
+        }
+        if (first === -1 || last === first) return false;
+        for (var j = first + 1; j < last; j++) {
+            if (parts[j].trim().toLowerCase() === "break") return true;
+        }
+        return false;
+    }
+
     function renderTags(textarea, container) {
         var text = textarea.value;
         var parts = splitPromptTags(text);
@@ -194,13 +220,34 @@
 
         var shown = parts.slice(0, MAX_TAGS);
         var overflow = parts.length - shown.length;
+        // Duplicate detection: same normalized tag more than once.
+        var keys = [];
+        var keyCount = {};
+        for (var k = 0; k < shown.length; k++) {
+            var keyk = normalizeTagKey(shown[k]);
+            keys.push(keyk);
+            if (keyk) keyCount[keyk] = (keyCount[keyk] || 0) + 1;
+        }
         shown.forEach(function (part, i) {
             var chip = document.createElement("div");
             chip.className = "taggerator-chip";
             chip.draggable = true;
             chip.setAttribute("data-index", String(i));
             var label = part.trim();
-            chip.title = label === "" ? label : label + "  (Alt+scroll: weight, Alt+click: delete)";
+            var key = keys[i];
+            var isDup = !!(key && keyCount[key] > 1);
+            if (isDup) {
+                chip.classList.add("duplicate");
+                if (isBreakSeparated(shown, keys, key)) {
+                    chip.classList.add("dup-break");
+                }
+            }
+            chip.title =
+                label === ""
+                    ? label
+                    : label +
+                      (isDup ? "  \u2014 duplicate" : "") +
+                      "  (Alt+scroll: weight, Alt+click: delete)";
             if (label === "") {
                 chip.textContent = "\u00b7";
                 chip.classList.add("empty");

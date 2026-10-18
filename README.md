@@ -17,6 +17,7 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - Works on all prompt boxes: txt2img, img2img, negative prompts, and the hires fix prompt fields
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
 - **Alt + Click** on a chip removes that tag from the prompt — the Alt makes it deliberate, so a stray click never deletes anything
+- Repeated tags get a **subtle red tint** so accidental doubles stand out — but duplicates separated by BREAK (usually intentional) get a much fainter one. `(solo:1.2)` and `solo` count as the same tag
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
 - Trailing commas are ignored — `1girl, land,` shows two chips, and the comma is kept if you reorder (it's a habit worth preserving)
 - Keeps prompts tidy: after a reorder, tags are trimmed and rejoined with a single space, so the prompt always reads `tag1, tag2, tag3`
