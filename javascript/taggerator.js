@@ -13,6 +13,7 @@
 
     var dragFrom = null;
     var hoverChip = null;
+    var fields = [];
 
     function getApp() {
         if (typeof window.gradioApp === "function") {
@@ -32,6 +33,31 @@
         var e = new Event("input", { bubbles: true });
         Object.defineProperty(e, "target", { value: target });
         target.dispatchEvent(e);
+    }
+
+    function markSynced(textarea, value) {
+        for (var i = 0; i < fields.length; i++) {
+            if (fields[i].textarea === textarea) fields[i].lastValue = value;
+        }
+    }
+
+    // External changes (e.g. "use prompt from preview image", other extensions)
+    // often set textarea.value without firing any input event. Watch the real
+    // value and re-render whenever it drifts from what we last rendered.
+    function pollExternalChanges() {
+        if (dragFrom !== null) return;
+        for (var i = 0; i < fields.length; i++) {
+            var f = fields[i];
+            if (!f.textarea.isConnected) {
+                fields.splice(i, 1);
+                i--;
+                continue;
+            }
+            if (f.textarea.value !== f.lastValue) {
+                f.lastValue = f.textarea.value;
+                renderTags(f.textarea, f.container);
+            }
+        }
     }
 
     function splitOnTopLevelCommas(text) {
@@ -282,6 +308,7 @@
             textarea.value = parts.join(", ");
             fireInput(textarea);
             renderTags(textarea, container);
+            markSynced(textarea, textarea.value);
         }
 
         function adjustChipWeight(chip, dir) {
@@ -298,6 +325,7 @@
             textarea.value = parts.join(", ");
             fireInput(textarea);
             renderTags(textarea, container);
+            markSynced(textarea, textarea.value);
         }
 
         container.addEventListener(
@@ -320,6 +348,7 @@
                 return;
             }
             renderTags(textarea, container);
+            markSynced(textarea, textarea.value);
         }
         function scheduleRender() {
             if (dragFrom !== null) return;
@@ -334,6 +363,8 @@
         });
 
         renderTags(textarea, container);
+        markSynced(textarea, textarea.value);
+        fields.push({ textarea: textarea, container: container, lastValue: textarea.value });
         return true;
     }
 
@@ -369,4 +400,6 @@
     } else {
         startObserving();
     }
+
+    setInterval(pollExternalChanges, 500);
 })();
