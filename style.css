@@ -1,0 +1,47 @@
+.taggerator-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 2px 0 2px;
+    line-height: 1;
+}
+
+.taggerator-tags.hidden {
+    display: none;
+}
+
+.taggerator-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    cursor: grab;
+    user-select: none;
+    color: var(--body-text-color, #d0d0d0);
+    background: var(--input-background-fill-secondary, rgba(128, 128, 128, 0.15));
+    border: 1px solid var(--border-color-primary, rgba(128, 128, 128, 0.4));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.taggerator-chip.empty {
+    opacity: 0.45;
+}
+
+.taggerator-chip.dragging {
+    opacity: 0.4;
+}
+
+.taggerator-chip.drag-over {
+    outline: 2px solid var(--primary-button-background-fill, #79c0ff);
+    outline-offset: -2px;
+}
+
+.taggerator-chip.taggerator-more {
+    cursor: default;
+    opacity: 0.6;
+}
