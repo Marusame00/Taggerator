@@ -169,6 +169,12 @@
         for (var p = 0; p < parts.length; p++) {
             if (parts[p].trim() !== "") meaningful++;
         }
+        // A prompt ending in a comma (e.g. "1girl, land,") is common style.
+        // The empty trailing segment is not a tag — never render a chip for it.
+        var lastIdx = parts.length - 1;
+        if (lastIdx >= 0 && parts[lastIdx].trim() === "") {
+            parts.length = lastIdx;
+        }
         container.replaceChildren();
         if (text.trim() === "" || parts.length < 2 || meaningful < 2) {
             container.classList.add("hidden");
@@ -204,17 +210,34 @@
         }
     }
 
-    function commitReorder(textarea, container, from, to) {
-        if (from === to) return;
-        var parts = splitOnTopLevelCommas(textarea.value).map(function (p) {
+    // Rebuild the prompt text after an edit. Trailing commas are style, not
+    // tags: the empty trailing segment is dropped and the comma is re-appended
+    // so the user's formatting habit survives a reorder. mutate() may return
+    // false to abort (nothing changed).
+    function rebuildPrompt(textarea, container, mutate) {
+        var raw = textarea.value;
+        var hasTrailingComma = /,[ \t]*$/.test(raw);
+        var parts = splitOnTopLevelCommas(raw).map(function (p) {
             return p.trim();
         });
-        var moved = parts.splice(from, 1)[0];
-        var target = to - (from < to ? 1 : 0);
-        parts.splice(target, 0, moved);
-        textarea.value = parts.join(", ");
+        while (parts.length && parts[parts.length - 1] === "") {
+            parts.pop();
+        }
+        if (mutate(parts) === false) return;
+        var out = parts.join(", ");
+        textarea.value = hasTrailingComma ? out + "," : out;
         fireInput(textarea);
         renderTags(textarea, container);
+        markSynced(textarea, textarea.value);
+    }
+
+    function commitReorder(textarea, container, from, to) {
+        if (from === to) return;
+        rebuildPrompt(textarea, container, function (parts) {
+            var moved = parts.splice(from, 1)[0];
+            var target = to - (from < to ? 1 : 0);
+            parts.splice(target, 0, moved);
+        });
     }
 
     function setup(boxId) {
@@ -300,32 +323,22 @@
         function deleteChip(chip) {
             if (dragFrom !== null) return;
             var from = Number(chip.dataset.index);
-            var parts = splitOnTopLevelCommas(textarea.value).map(function (p) {
-                return p.trim();
+            rebuildPrompt(textarea, container, function (parts) {
+                if (parts[from] === undefined) return false;
+                parts.splice(from, 1);
             });
-            if (parts[from] === undefined) return;
-            parts.splice(from, 1);
-            textarea.value = parts.join(", ");
-            fireInput(textarea);
-            renderTags(textarea, container);
-            markSynced(textarea, textarea.value);
         }
 
         function adjustChipWeight(chip, dir) {
             if (dragFrom !== null) return;
             var from = Number(chip.dataset.index);
-            var parts = splitOnTopLevelCommas(textarea.value).map(function (p) {
-                return p.trim();
+            rebuildPrompt(textarea, container, function (parts) {
+                var tag = parts[from];
+                if (tag === undefined || tag === "") return false;
+                var next = adjustTagWeight(tag, dir);
+                if (next === null || next === tag) return false;
+                parts[from] = next;
             });
-            var tag = parts[from];
-            if (tag === undefined || tag === "") return;
-            var next = adjustTagWeight(tag, dir);
-            if (next === null || next === tag) return;
-            parts[from] = next;
-            textarea.value = parts.join(", ");
-            fireInput(textarea);
-            renderTags(textarea, container);
-            markSynced(textarea, textarea.value);
         }
 
         container.addEventListener(

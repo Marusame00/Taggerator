@@ -17,6 +17,7 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
 - **Alt + Click** on a chip removes that tag from the prompt — the Alt makes it deliberate, so a stray click never deletes anything
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
+- Trailing commas are ignored — `1girl, land,` shows two chips, and the comma is kept if you reorder (it's a habit worth preserving)
 - Keeps prompts tidy: after a reorder, tags are trimmed and rejoined with a single space, so the prompt always reads `tag1, tag2, tag3`
 - Pure frontend — no Python, no settings, nothing to break
 
