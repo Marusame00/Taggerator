@@ -15,6 +15,7 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - Weights above 1 work (`:2`), and a tag whose weight lands exactly on 1.0 sheds its parens, matching the WebUI's own attention editor
 - Works on all prompt boxes: txt2img, img2img, negative prompts, and the hires fix prompt fields
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
+- **Alt + Click** on a chip removes that tag from the prompt — the Alt makes it deliberate, so a stray click never deletes anything
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
 - Keeps prompts tidy: after a reorder, tags are trimmed and rejoined with a single space, so the prompt always reads `tag1, tag2, tag3`
 - Pure frontend — no Python, no settings, nothing to break
@@ -64,6 +65,10 @@ With **Alt held**, scroll the mouse wheel over a chip:
 
 The step sizes follow the WebUI's own Settings (`keyedit_precision_attention` for parens, `keyedit_precision_extra` for network tags), so Taggerator behaves exactly like the built-in Ctrl+Up/Ctrl+Down attention editor. If the weight reaches exactly `1.0`, the parentheses are removed, just like the built-in editor does.
 
+## Deleting tags
+
+**Alt + Click** on a chip removes that tag from the prompt. A plain click, and even a double-click, do nothing — deletion only happens with the modifier held, so you can click around the chip row freely without risking your prompt.
+
 ## Compatibility
 
 - Built and tested against [sd-webui-forge-classic](https://github.com/Haoming02/sd-webui-forge-classic) (the `neo` branch / Forge Classic build)
@@ -73,7 +78,6 @@ The step sizes follow the WebUI's own Settings (`keyedit_precision_attention` fo
 ## Roadmap
 
 - Pointer/touch drag support
-- Delete a tag with double-click
 - Toggle Taggerator per prompt box
 
 ## License

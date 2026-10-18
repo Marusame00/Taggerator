@@ -158,7 +158,7 @@
             chip.draggable = true;
             chip.setAttribute("data-index", String(i));
             var label = part.trim();
-            chip.title = label === "" ? label : label + "  (Alt+scroll: weight)";
+            chip.title = label === "" ? label : label + "  (Alt+scroll: weight, Alt+click: delete)";
             if (label === "") {
                 chip.textContent = "\u00b7";
                 chip.classList.add("empty");
@@ -260,12 +260,29 @@
         });
 
         container.addEventListener("click", function (e) {
-            if (!e.shiftKey) return;
             var chip = chipFromEvent(e);
             if (!chip) return;
+            if (e.altKey) {
+                deleteChip(chip);
+                return;
+            }
+            if (!e.shiftKey) return;
             var from = Number(chip.dataset.index);
             commitReorder(textarea, container, from, from - 1);
         });
+
+        function deleteChip(chip) {
+            if (dragFrom !== null) return;
+            var from = Number(chip.dataset.index);
+            var parts = splitOnTopLevelCommas(textarea.value).map(function (p) {
+                return p.trim();
+            });
+            if (parts[from] === undefined) return;
+            parts.splice(from, 1);
+            textarea.value = parts.join(", ");
+            fireInput(textarea);
+            renderTags(textarea, container);
+        }
 
         function adjustChipWeight(chip, dir) {
             if (dragFrom !== null) return;
