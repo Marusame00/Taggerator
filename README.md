@@ -1,5 +1,7 @@
 # Taggerator
 
+![Taggerator demo](assets/taggerator-demo.png)
+
 A small drag-and-drop **tag separator** for the prompt boxes of Stable Diffusion WebUI Forge Classic.
 
 When you type comma-separated words into a prompt box, Taggerator renders them as a list of draggable tag chips underneath the box. Drag a chip left or right and the matching text moves to its new place in the prompt, in real time.
