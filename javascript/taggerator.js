@@ -60,7 +60,7 @@
         }
     }
 
-    function splitOnTopLevelCommas(text) {
+    function splitPromptTags(text) {
         var parts = [];
         var stack = [];
         var cur = "";
@@ -75,6 +75,16 @@
                     stack.pop();
                 }
                 cur += ch;
+                // A closing ">" that returns to depth 0 ends a network tag
+                // (<lora:...>, <embedding:...>, <hypernet:...>). Anything after
+                // it on this segment — usually the trigger word, with no comma
+                // inserted by LoRA pickers — is a separate token, so cut here
+                // just like a comma. If a comma follows directly, let the comma
+                // do the splitting instead, or we get an empty segment.
+                if (ch === ">" && stack.length === 0 && i + 1 < text.length && text[i + 1] !== ",") {
+                    parts.push(cur);
+                    cur = "";
+                }
             } else if (ch === "," && stack.length === 0) {
                 parts.push(cur);
                 cur = "";
@@ -164,7 +174,7 @@
 
     function renderTags(textarea, container) {
         var text = textarea.value;
-        var parts = splitOnTopLevelCommas(text);
+        var parts = splitPromptTags(text);
         var meaningful = 0;
         for (var p = 0; p < parts.length; p++) {
             if (parts[p].trim() !== "") meaningful++;
@@ -217,7 +227,7 @@
     function rebuildPrompt(textarea, container, mutate) {
         var raw = textarea.value;
         var hasTrailingComma = /,[ \t]*$/.test(raw);
-        var parts = splitOnTopLevelCommas(raw).map(function (p) {
+        var parts = splitPromptTags(raw).map(function (p) {
             return p.trim();
         });
         while (parts.length && parts[parts.length - 1] === "") {
@@ -298,7 +308,7 @@
             if (chip) {
                 to = Number(chip.dataset.index);
             } else {
-                to = splitOnTopLevelCommas(textarea.value).length;
+                to = splitPromptTags(textarea.value).length;
             }
             dragFrom = null;
             clearHover(container);
