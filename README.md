@@ -12,7 +12,7 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - Drag a chip to reorder the text in the prompt — the textarea is updated immediately
 - **Alt + Scroll** over a chip raises or lowers that tag's weight — bare tags get wrapped as `(tag:0.9)`, weighted tags adjust the number, and network tags adjust their strength
 - LoRA / LyCORIS / hypernet tags like `<lora:name:0.8>` are kept intact as a single chip, and their weight adjusts in fine steps (0.05)
-- When a LoRA loads without a comma — `<lora:RubyRose_V1-3:1> RubyRoseV1` — the tag and its trigger word become two separate chips (the `>` acts like the comma the picker forgot), and editing inserts the comma for you
+- When a LoRA loads without a comma — `<lora:1> triggerword` — the tag and its trigger word become two separate chips (the `>` acts like the comma the picker forgot), and editing inserts the comma for you
 - Weights above 1 work (`:2`), and a tag whose weight lands exactly on 1.0 sheds its parens, matching the WebUI's own attention editor
 - Works on all prompt boxes: txt2img, img2img, negative prompts, and the hires fix prompt fields
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
