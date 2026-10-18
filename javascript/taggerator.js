@@ -60,6 +60,71 @@
         return parts;
     }
 
+    function clampWeight(w) {
+        return Math.max(0.01, w);
+    }
+
+    function formatWeight(w) {
+        w = parseFloat(w.toPrecision(12));
+        if (Number.isInteger(w)) return w + ".0";
+        return String(w);
+    }
+
+    function precisionFor(mode) {
+        var opts = window.opts || {};
+        if (mode === "angle") {
+            return typeof opts.keyedit_precision_extra === "number"
+                ? opts.keyedit_precision_extra
+                : 0.05;
+        }
+        return typeof opts.keyedit_precision_attention === "number"
+            ? opts.keyedit_precision_attention
+            : 0.1;
+    }
+
+    // Adjusts the weight of one prompt tag. Returns the new tag text, or null
+    // when the tag carries no adjustable weight (e.g. [a:b:c] schedules).
+    function adjustTagWeight(tag, dir) {
+        var delta;
+        var m = tag.match(/^<(.+):([0-9]+(?:\.[0-9]+)?)>$/);
+        if (m) {
+            delta = precisionFor("angle");
+            var loraWeight = clampWeight(parseFloat(m[2]) + delta * dir);
+            return "<" + m[1] + ":" + formatWeight(loraWeight) + ">";
+        }
+
+        m = tag.match(/^([({])(.+):([0-9]+(?:\.[0-9]+)?)([)}])$/);
+        if (m) {
+            delta = precisionFor("paren");
+            var parenWeight = clampWeight(parseFloat(m[3]) + delta * dir);
+            if (parenWeight === 1 && m[1] === "(") {
+                return m[2].trim();
+            }
+            return m[1] + m[2] + ":" + formatWeight(parenWeight) + m[4];
+        }
+
+        m = tag.match(/^\(([^()\[\]{}<>]*)\)$/);
+        if (m) {
+            delta = precisionFor("paren");
+            var implicitWeight = clampWeight(1.1 + delta * dir);
+            if (implicitWeight === 1) {
+                return m[1].trim();
+            }
+            return "(" + m[1] + ":" + formatWeight(implicitWeight) + ")";
+        }
+
+        if (!/[()\[\]{}<>]/.test(tag)) {
+            delta = precisionFor("paren");
+            var bareWeight = clampWeight(1 + delta * dir);
+            if (bareWeight === 1) {
+                return tag;
+            }
+            return "(" + tag + ":" + formatWeight(bareWeight) + ")";
+        }
+
+        return null;
+    }
+
     function chipFromEvent(e) {
         return e.target && typeof e.target.closest === "function"
             ? e.target.closest(".taggerator-chip")
@@ -93,7 +158,7 @@
             chip.draggable = true;
             chip.setAttribute("data-index", String(i));
             var label = part.trim();
-            chip.title = label;
+            chip.title = label === "" ? label : label + "  (Alt+scroll: weight)";
             if (label === "") {
                 chip.textContent = "\u00b7";
                 chip.classList.add("empty");
@@ -201,6 +266,35 @@
             var from = Number(chip.dataset.index);
             commitReorder(textarea, container, from, from - 1);
         });
+
+        function adjustChipWeight(chip, dir) {
+            if (dragFrom !== null) return;
+            var from = Number(chip.dataset.index);
+            var parts = splitOnTopLevelCommas(textarea.value).map(function (p) {
+                return p.trim();
+            });
+            var tag = parts[from];
+            if (tag === undefined || tag === "") return;
+            var next = adjustTagWeight(tag, dir);
+            if (next === null || next === tag) return;
+            parts[from] = next;
+            textarea.value = parts.join(", ");
+            fireInput(textarea);
+            renderTags(textarea, container);
+        }
+
+        container.addEventListener(
+            "wheel",
+            function (e) {
+                if (!e.altKey) return;
+                var chip = chipFromEvent(e);
+                if (!chip) return;
+                e.preventDefault();
+                e.stopPropagation();
+                adjustChipWeight(chip, e.deltaY < 0 ? 1 : -1);
+            },
+            { passive: false },
+        );
 
         var timer = null;
         function renderNow() {

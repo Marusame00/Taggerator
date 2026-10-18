@@ -10,6 +10,9 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 
 - Comma-separated prompt words appear as chips under the prompt box
 - Drag a chip to reorder the text in the prompt — the textarea is updated immediately
+- **Alt + Scroll** over a chip raises or lowers that tag's weight — bare tags get wrapped as `(tag:0.9)`, weighted tags adjust the number, and network tags adjust their strength
+- LoRA / LyCORIS / hypernet tags like `<lora:name:0.8>` are kept intact as a single chip, and their weight adjusts in fine steps (0.05)
+- Weights above 1 work (`:2`), and a tag whose weight lands exactly on 1.0 sheds its parens, matching the WebUI's own attention editor
 - Works on all prompt boxes: txt2img, img2img, negative prompts, and the hires fix prompt fields
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
@@ -47,6 +50,19 @@ forest, masterpiece, best quality, 1girl, (solo:1.2)
 ```
 
 The chip list refreshes as you type (with a short debounce) and hides itself when there is nothing to reorder.
+
+## Adjusting weights
+
+With **Alt held**, scroll the mouse wheel over a chip:
+
+| Tag state | Scroll up | Scroll down |
+| --- | --- | --- |
+| `masterpiece` (bare) | `(masterpiece:1.1)` | `(masterpiece:0.9)` |
+| `(solo:1.2)` | `(solo:1.3)` | `(solo:1.1)` |
+| `<lora:style:0.8>` | `<lora:style:0.85>` | `<lora:style:0.75>` |
+| `[cat:dog:0.4]` (schedule) | untouched — schedules are not weights | untouched |
+
+The step sizes follow the WebUI's own Settings (`keyedit_precision_attention` for parens, `keyedit_precision_extra` for network tags), so Taggerator behaves exactly like the built-in Ctrl+Up/Ctrl+Down attention editor. If the weight reaches exactly `1.0`, the parentheses are removed, just like the built-in editor does.
 
 ## Compatibility
 
