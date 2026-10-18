@@ -93,7 +93,38 @@
             }
         }
         parts.push(cur);
-        return parts;
+        // Post-pass: a standalone all-caps BREAK is always its own chip, even
+        // with no commas around it — "a BREAK b", "a\nBREAK\nb" and "a,BREAK,b"
+        // all split into [a, BREAK, b]. BREAKFAST or MYBREAK don't match.
+        // Purely empty gap pieces are dropped; segments without any BREAK are
+        // kept untouched (so "a,,b" still keeps its "·" chip).
+        var result = [];
+        var re = /\bBREAK\b/g;
+        for (var p = 0; p < parts.length; p++) {
+            var seg = parts[p];
+            if (seg.trim() === "") {
+                result.push(seg);
+                continue;
+            }
+            var last = 0;
+            var foundBreak = false;
+            re.lastIndex = 0;
+            var m;
+            while ((m = re.exec(seg)) !== null) {
+                foundBreak = true;
+                if (m.index > last && seg.slice(last, m.index).trim() !== "") {
+                    result.push(seg.slice(last, m.index));
+                }
+                result.push("BREAK");
+                last = m.index + 5;
+            }
+            if (!foundBreak) {
+                result.push(seg);
+            } else if (last < seg.length && seg.slice(last).trim() !== "") {
+                result.push(seg.slice(last));
+            }
+        }
+        return result;
     }
 
     function clampWeight(w) {
@@ -122,6 +153,7 @@
     // when the tag carries no adjustable weight (e.g. [a:b:c] schedules).
     function adjustTagWeight(tag, dir) {
         var delta;
+        if (tag.trim().toUpperCase() === "BREAK") return null;
         var m = tag.match(/^<(.+):([0-9]+(?:\.[0-9]+)?)>$/);
         if (m) {
             delta = precisionFor("angle");

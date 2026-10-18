@@ -19,6 +19,7 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - **Alt + Click** on a chip removes that tag from the prompt — the Alt makes it deliberate, so a stray click never deletes anything
 - Repeated tags get a **subtle red tint** so accidental doubles stand out — but duplicates separated by BREAK (usually intentional) get a much fainter one. `(solo:1.2)` and `solo` count as the same tag
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
+- `BREAK` is always its own chip, even without commas — `a BREAK b` and `a BREAK b` typed on separate lines split into `a`, `BREAK`, `b` (lookalikes like `BREAKFAST` are left alone)
 - Trailing commas are ignored — `1girl, land,` shows two chips, and the comma is kept if you reorder (it's a habit worth preserving)
 - Keeps prompts tidy: after a reorder, tags are trimmed and rejoined with a single space, so the prompt always reads `tag1, tag2, tag3`
 - Pure frontend — no Python, no settings, nothing to break
