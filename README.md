@@ -82,6 +82,10 @@ The step sizes follow the WebUI's own Settings (`keyedit_precision_attention` fo
 - Pointer/touch drag support
 - Toggle Taggerator per prompt box
 
+## Made with AI
+
+Taggerator was built with the help of the Abacus desktop client and the Smaug Flash (thinking) model: the user conceived the feature set and verified each release in their local WebUI, while the AI assisted with the implementation, edge-case handling and documentation.
+
 ## License
 
 [MIT](LICENSE)
