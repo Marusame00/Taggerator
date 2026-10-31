@@ -11,6 +11,17 @@
     var MAX_TAG_LEN = 80;
     var DEBOUNCE_MS = 300;
 
+    // Did a newline sit between two split tokens? True for "1girl,\nsolo" and
+    // "a\nBREAK", false for "a, b" or "a BREAK b". Rebuild uses this to put
+    // Enter-separated prompt lines back together instead of bunching them.
+    function gapHasNewline(a, b) {
+        var tailWs = a.match(/\s+$/);
+        if (tailWs !== null && tailWs[0].indexOf("\n") !== -1) return true;
+        var leadWs = b.match(/^\s+/);
+        if (leadWs !== null && leadWs[0].indexOf("\n") !== -1) return true;
+        return false;
+    }
+
     var dragFrom = null;
     var hoverChip = null;
     var fields = [];
@@ -115,7 +126,10 @@
                 if (m.index > last && seg.slice(last, m.index).trim() !== "") {
                     result.push(seg.slice(last, m.index));
                 }
-                result.push("BREAK");
+                // Keep the whitespace that led into BREAK attached to it, so a
+                // line break like "a\nBREAK" survives the rejoin below.
+                var ws = seg.slice(last, m.index).match(/\s+$/);
+                result.push((ws ? ws[0] : "") + "BREAK");
                 last = m.index + 5;
             }
             if (!foundBreak) {
@@ -123,6 +137,19 @@
             } else if (last < seg.length && seg.slice(last).trim() !== "") {
                 result.push(seg.slice(last));
             }
+        }
+        // Flag when a line break follows a token ("this token ends its line").
+        // rebuildPrompt turns those back into ",\n" joins. The flags are
+        // position-aligned, not attached to tokens: a reorder moves only the
+        // parts, so every original line keeps its break no matter which tag
+        // comes to rest on it.
+        result.nl = [];
+        for (var q = 0; q < result.length; q++) {
+            result.nl.push(
+                q + 1 < result.length
+                    ? gapHasNewline(result[q], result[q + 1])
+                    : false,
+            );
         }
         return result;
     }
@@ -301,19 +328,28 @@
 
     // Rebuild the prompt text after an edit. Trailing commas are style, not
     // tags: the empty trailing segment is dropped and the comma is re-appended
-    // so the user's formatting habit survives a reorder. mutate() may return
-    // false to abort (nothing changed).
+    // so the user's formatting habit survives a reorder. Enter-separated lines
+    // survive too: a token that ended its line is re-joined with ",\n" instead
+    // of ", ". mutate(parts, nl) may return false to abort (nothing changed);
+    // nl carries position-aligned newline flags and must be spliced in sync
+    // only when the callback changes the part LIST length (delete).
     function rebuildPrompt(textarea, container, mutate) {
         var raw = textarea.value;
-        var hasTrailingComma = /,[ \t]*$/.test(raw);
-        var parts = splitPromptTags(raw).map(function (p) {
+        var hasTrailingComma = /,\s*$/.test(raw);
+        var tokens = splitPromptTags(raw);
+        var nl = tokens.nl;
+        var parts = tokens.map(function (p) {
             return p.trim();
         });
         while (parts.length && parts[parts.length - 1] === "") {
             parts.pop();
+            nl.pop();
         }
-        if (mutate(parts) === false) return;
-        var out = parts.join(", ");
+        if (mutate(parts, nl) === false) return;
+        var out = parts.length === 0 ? "" : parts[0];
+        for (var i = 1; i < parts.length; i++) {
+            out += (nl[i - 1] ? ",\n" : ", ") + parts[i];
+        }
         textarea.value = hasTrailingComma ? out + "," : out;
         fireInput(textarea);
         renderTags(textarea, container);
@@ -412,9 +448,10 @@
         function deleteChip(chip) {
             if (dragFrom !== null) return;
             var from = Number(chip.dataset.index);
-            rebuildPrompt(textarea, container, function (parts) {
+            rebuildPrompt(textarea, container, function (parts, nl) {
                 if (parts[from] === undefined) return false;
                 parts.splice(from, 1);
+                nl.splice(from, 1);
             });
         }
 
