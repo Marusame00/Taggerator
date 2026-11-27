@@ -315,6 +315,12 @@
         if (lastIdx >= 0 && parts[lastIdx].trim() === "") {
             parts.length = lastIdx;
         }
+        // replaceChildren() below detaches the search control and re-appends
+        // it, which drops focus and the caret. Remember them so typing in the
+        // search box survives the re-render it triggers.
+        var searchInputEl = container._taggeratorSearchInput;
+        var restoreSearch = !!(searchInputEl && document.activeElement === searchInputEl);
+        var caretPos = restoreSearch ? searchInputEl.selectionStart : 0;
         container.replaceChildren();
         var searchEl = container._taggeratorSearch;
         if (text.trim() === "" || parts.length < 2 || meaningful < 2) {
@@ -385,7 +391,14 @@
             container.appendChild(more);
         }
         // The search control rides at the end of the chip row.
-        if (searchEl) container.appendChild(searchEl);
+        if (searchEl) {
+            container.appendChild(searchEl);
+            if (restoreSearch && searchInputEl) {
+                searchInputEl.focus();
+                var pos = Math.min(caretPos, searchInputEl.value.length);
+                searchInputEl.setSelectionRange(pos, pos);
+            }
+        }
     }
 
     // Rebuild the prompt text after an edit. Trailing commas are style, not
@@ -460,6 +473,7 @@
         search.appendChild(searchLabel);
         search.appendChild(searchInput);
         container._taggeratorSearch = search;
+        container._taggeratorSearchInput = searchInput;
         container._taggeratorQuery = "";
         search.addEventListener("click", function () {
             searchInput.focus();
