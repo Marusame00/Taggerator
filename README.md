@@ -19,7 +19,8 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - Works on all prompt boxes: txt2img, img2img, negative prompts, and the hires fix prompt fields
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
 - **Alt + Click** on a chip removes that tag from the prompt — the Alt makes it deliberate, so a stray click never deletes anything
-- **Search box** under the prompt tints chips green in proportion to how closely they match what you type — exact hits glow brightest, prefix and substring hits less, scattered letters (`1grl` → `1girl`) faintly, and non-matches fade back. `Esc` clears it
+- **Search chip** in the chip row tints chips green in proportion to how closely they match what you type — exact hits glow brightest, prefix and substring hits less, scattered letters (`1grl` → `1girl`) faintly, and non-matches fade back. `Esc` clears it
+- **Double-click a chip to edit it** in place — Enter or clicking away saves, `Esc` reverts
 - A network tag starting mid-prompt splits like a comma before it too — `prompt<lora:x:1>` is two chips, not one
 - Repeated tags get a **subtle red tint** so accidental doubles stand out — but duplicates separated by BREAK (usually intentional) get a much fainter one. `(solo:1.2)` and `solo` count as the same tag
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
@@ -76,7 +77,7 @@ The step sizes follow the WebUI's own Settings (`keyedit_precision_attention` fo
 
 ## Deleting tags
 
-**Alt + Click** on a chip removes that tag from the prompt. A plain click, and even a double-click, do nothing — deletion only happens with the modifier held, so you can click around the chip row freely without risking your prompt.
+**Alt + Click** on a chip removes that tag from the prompt. A plain click does nothing, and deletion only happens with the modifier held, so you can click around the chip row freely without risking your prompt. **Double-click** edits a chip's text in place instead.
 
 ## Compatibility
 

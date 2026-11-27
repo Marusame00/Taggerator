@@ -298,6 +298,11 @@
     }
 
     function renderTags(textarea, container) {
+        // An inline chip edit owns the DOM while it is open. A re-render here
+        // (the 500ms poller catching Gradio echoing the textarea value, or a
+        // debounced input event) would replaceChildren() the editor away
+        // mid-typing, so skip until the edit finishes and re-renders itself.
+        if (container._taggeratorEditing) return;
         var text = textarea.value;
         var parts = splitPromptTags(text);
         var meaningful = 0;
@@ -361,7 +366,7 @@
                     ? label
                     : label +
                       (isDup ? "  \u2014 duplicate" : "") +
-                      "  (Alt+scroll: weight, Alt+click: delete)";
+                      "  (double-click: edit, Alt+scroll: weight, Alt+click: delete)";
             if (label === "") {
                 chip.textContent = "\u00b7";
                 chip.classList.add("empty");
@@ -379,6 +384,8 @@
             more.textContent = "+" + overflow + " more";
             container.appendChild(more);
         }
+        // The search control rides at the end of the chip row.
+        if (searchEl) container.appendChild(searchEl);
     }
 
     // Rebuild the prompt text after an edit. Trailing commas are style, not
@@ -435,24 +442,35 @@
         container.setAttribute("data-taggerator-for", boxId);
         label.appendChild(container);
 
-        // Search box: filters nothing out, it tints chips green in proportion
-        // to how closely they match. Lives outside the container so
-        // renderTags() can rebuild the chips without destroying it.
-        var search = document.createElement("input");
-        search.type = "search";
+        // Search: a chip-sized control that sits in the chip row, so it reads
+        // as part of the same strip instead of a full-width text box. It
+        // filters nothing out — it tints chips green in proportion to how
+        // closely they match. renderTags() re-appends it after rebuilding the
+        // chips, which is why it lives on the container rather than the DOM.
+        var search = document.createElement("div");
         search.className = "taggerator-search hidden";
-        search.placeholder = "Search tags\u2026";
-        search.setAttribute("aria-label", "Search tags");
-        label.insertBefore(search, container);
+        var searchLabel = document.createElement("span");
+        searchLabel.className = "taggerator-search-label";
+        searchLabel.textContent = "Search:";
+        var searchInput = document.createElement("input");
+        searchInput.type = "text";
+        searchInput.className = "taggerator-search-input";
+        searchInput.placeholder = "tag";
+        searchInput.setAttribute("aria-label", "Search tags");
+        search.appendChild(searchLabel);
+        search.appendChild(searchInput);
         container._taggeratorSearch = search;
         container._taggeratorQuery = "";
-        search.addEventListener("input", function () {
-            container._taggeratorQuery = search.value;
+        search.addEventListener("click", function () {
+            searchInput.focus();
+        });
+        searchInput.addEventListener("input", function () {
+            container._taggeratorQuery = searchInput.value;
             renderTags(textarea, container);
         });
-        search.addEventListener("keydown", function (e) {
+        searchInput.addEventListener("keydown", function (e) {
             if (e.key === "Escape") {
-                search.value = "";
+                searchInput.value = "";
                 container._taggeratorQuery = "";
                 renderTags(textarea, container);
             }
@@ -523,6 +541,73 @@
             var from = Number(chip.dataset.index);
             commitReorder(textarea, container, from, from - 1);
         });
+
+        container.addEventListener("dblclick", function (e) {
+            var chip = chipFromEvent(e);
+            if (!chip) return;
+            if (chip.classList.contains("taggerator-more")) return;
+            e.preventDefault();
+            startEdit(chip);
+        });
+
+        // Double-click turns a chip into an inline text field. Enter or
+        // clicking away commits, Escape reverts. The chip stops being
+        // draggable while editing so text selection works normally.
+        function startEdit(chip) {
+            if (chip.dataset.editing === "1") return;
+            if (dragFrom !== null) return;
+            var idx = Number(chip.dataset.index);
+            var original = splitPromptTags(textarea.value).map(function (p) {
+                return p.trim();
+            })[idx];
+            if (original === undefined) return;
+            chip.dataset.editing = "1";
+            chip.draggable = false;
+            chip.classList.add("editing");
+            container._taggeratorEditing = true;
+            chip.textContent = "";
+            var input = document.createElement("input");
+            input.type = "text";
+            input.className = "taggerator-chip-edit";
+            input.value = original;
+            chip.appendChild(input);
+            input.focus();
+            input.select();
+            var done = false;
+            function finish(commit) {
+                if (done) return;
+                done = true;
+                container._taggeratorEditing = false;
+                var val = input.value.trim();
+                if (commit && val !== "" && val !== original) {
+                    rebuildPrompt(textarea, container, function (parts) {
+                        if (parts[idx] === undefined) return false;
+                        parts[idx] = val;
+                    });
+                    return;
+                }
+                renderTags(textarea, container);
+            }
+            input.addEventListener("keydown", function (ev) {
+                ev.stopPropagation();
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    finish(true);
+                } else if (ev.key === "Escape") {
+                    ev.preventDefault();
+                    finish(false);
+                }
+            });
+            input.addEventListener("blur", function () {
+                finish(true);
+            });
+            input.addEventListener("click", function (ev) {
+                ev.stopPropagation();
+            });
+            input.addEventListener("dblclick", function (ev) {
+                ev.stopPropagation();
+            });
+        }
 
         function deleteChip(chip) {
             if (dragFrom !== null) return;

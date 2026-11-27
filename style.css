@@ -10,27 +10,52 @@
     display: none;
 }
 
+/* Search rides in the chip row as a chip-sized control, not a full-width
+   text box: transparent input inside a themed pill, so it never renders as a
+   white box on a dark UI. */
 .taggerator-search {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 6px 2px 0 2px;
-    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 10px;
     font-size: 12px;
     line-height: 1.4;
+    cursor: text;
     color: var(--body-text-color, #d0d0d0);
-    background: var(--input-background-fill, rgba(128, 128, 128, 0.1));
+    background: var(--input-background-fill-secondary, rgba(128, 128, 128, 0.15));
     border: 1px solid var(--border-color-primary, rgba(128, 128, 128, 0.4));
-    border-radius: 8px;
-    outline: none;
 }
 
 .taggerator-search.hidden {
     display: none;
 }
 
-.taggerator-search:focus {
+.taggerator-search:focus-within {
     border-color: rgba(64, 214, 122, 0.7);
+}
+
+.taggerator-search-label {
+    opacity: 0.65;
+}
+
+.taggerator-search-input {
+    width: 64px;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.taggerator-search-input::placeholder {
+    color: inherit;
+    opacity: 0.4;
 }
 
 .taggerator-chip {
@@ -97,4 +122,26 @@
 
 .taggerator-chip.no-match {
     opacity: 0.4;
+}
+
+/* Inline chip editing (double-click). */
+.taggerator-chip.editing {
+    cursor: text;
+    padding: 2px 7px;
+    outline: 2px solid rgba(64, 214, 122, 0.7);
+    outline-offset: -2px;
+}
+
+.taggerator-chip-edit {
+    width: 14ch;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
 }
