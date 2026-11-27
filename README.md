@@ -19,6 +19,8 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - Works on all prompt boxes: txt2img, img2img, negative prompts, and the hires fix prompt fields
 - **Shift + Click** on a chip moves it one position to the left (keyboard-friendly alternative)
 - **Alt + Click** on a chip removes that tag from the prompt — the Alt makes it deliberate, so a stray click never deletes anything
+- **Search box** under the prompt tints chips green in proportion to how closely they match what you type — exact hits glow brightest, prefix and substring hits less, scattered letters (`1grl` → `1girl`) faintly, and non-matches fade back. `Esc` clears it
+- A network tag starting mid-prompt splits like a comma before it too — `prompt<lora:x:1>` is two chips, not one
 - Repeated tags get a **subtle red tint** so accidental doubles stand out — but duplicates separated by BREAK (usually intentional) get a much fainter one. `(solo:1.2)` and `solo` count as the same tag
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
 - `BREAK` is always its own chip, even without commas — `a BREAK b` and `a BREAK b` typed on separate lines split into `a`, `BREAK`, `b` (lookalikes like `BREAKFAST` are left alone)

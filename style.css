@@ -10,6 +10,29 @@
     display: none;
 }
 
+.taggerator-search {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 6px 2px 0 2px;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--body-text-color, #d0d0d0);
+    background: var(--input-background-fill, rgba(128, 128, 128, 0.1));
+    border: 1px solid var(--border-color-primary, rgba(128, 128, 128, 0.4));
+    border-radius: 8px;
+    outline: none;
+}
+
+.taggerator-search.hidden {
+    display: none;
+}
+
+.taggerator-search:focus {
+    border-color: rgba(64, 214, 122, 0.7);
+}
+
 .taggerator-chip {
     display: inline-flex;
     align-items: center;
@@ -62,4 +85,16 @@
         var(--taggerator-dupsoft-b, rgba(163, 63, 63, 0.06))
     );
     border-color: var(--taggerator-dupsoft-border, rgba(172, 74, 74, 0.32));
+}
+
+/* Search tint. --taggerator-match is 0..1, set per chip by renderTags();
+   the closer the match, the brighter the green. Declared after the duplicate
+   rules so a search hit wins over the red duplicate tint. */
+.taggerator-chip.match {
+    background: rgba(64, 214, 122, calc(0.10 + 0.55 * var(--taggerator-match, 0)));
+    border-color: rgba(64, 214, 122, calc(0.30 + 0.65 * var(--taggerator-match, 0)));
+}
+
+.taggerator-chip.no-match {
+    opacity: 0.4;
 }

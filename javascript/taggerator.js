@@ -79,6 +79,20 @@
         for (var i = 0; i < text.length; i++) {
             var ch = text[i];
             if (ch === "(" || ch === "[" || ch === "{" || ch === "<") {
+                // A network tag (<lora:...>, <lyco:...>, <hypernet:...>) that
+                // starts mid-segment acts like a comma before it too:
+                // "prompt<lora:x:1>" is two tags, not one. Only cut at depth 0,
+                // only when a real tag precedes it, and only for the
+                // "<name:" shape so a bare "<" in prose is left alone.
+                if (
+                    ch === "<" &&
+                    stack.length === 0 &&
+                    cur.trim() !== "" &&
+                    /^<[A-Za-z_][\w-]*:/.test(text.slice(i))
+                ) {
+                    parts.push(cur);
+                    cur = "";
+                }
                 stack.push(ch);
                 cur += ch;
             } else if (Object.prototype.hasOwnProperty.call(closers, ch)) {
@@ -241,6 +255,32 @@
         return s;
     }
 
+    // How closely does a chip label match the search box? 0 = no match,
+    // 1 = exact. Prefix and substring hits score highest, a scattered
+    // subsequence ("1grl" -> "1girl") still counts as a weak match. The score
+    // drives the green tint, so closer matches glow brighter.
+    function matchScore(label, query) {
+        var hay = label.toLowerCase();
+        var q = query.toLowerCase();
+        if (q === "") return 0;
+        if (hay === q) return 1;
+        if (hay.indexOf(q) === 0) {
+            return 0.85 + 0.13 * (q.length / hay.length);
+        }
+        var idx = hay.indexOf(q);
+        if (idx !== -1) {
+            var density = q.length / hay.length;
+            var earliness = 1 - idx / hay.length;
+            return 0.55 + 0.25 * (0.6 * density + 0.4 * earliness);
+        }
+        var qi = 0;
+        for (var i = 0; i < hay.length && qi < q.length; i++) {
+            if (hay[i] === q[qi]) qi++;
+        }
+        if (qi === q.length) return 0.2 + 0.3 * (q.length / hay.length);
+        return 0;
+    }
+
     function isBreakSeparated(parts, keys, key) {
         var first = -1;
         var last = -1;
@@ -271,11 +311,15 @@
             parts.length = lastIdx;
         }
         container.replaceChildren();
+        var searchEl = container._taggeratorSearch;
         if (text.trim() === "" || parts.length < 2 || meaningful < 2) {
             container.classList.add("hidden");
+            if (searchEl) searchEl.classList.add("hidden");
             return;
         }
         container.classList.remove("hidden");
+        if (searchEl) searchEl.classList.remove("hidden");
+        var query = (container._taggeratorQuery || "").trim();
 
         var shown = parts.slice(0, MAX_TAGS);
         var overflow = parts.length - shown.length;
@@ -299,6 +343,17 @@
                 chip.classList.add("duplicate");
                 if (isBreakSeparated(shown, keys, key)) {
                     chip.classList.add("dup-break");
+                }
+            }
+            // Search tint: brighter green the closer the label matches. A chip
+            // that misses entirely fades back so the hits stand out.
+            if (query !== "") {
+                var score = matchScore(label, query);
+                if (score > 0) {
+                    chip.classList.add("match");
+                    chip.style.setProperty("--taggerator-match", score.toFixed(3));
+                } else {
+                    chip.classList.add("no-match");
                 }
             }
             chip.title =
@@ -379,6 +434,30 @@
         container.className = "taggerator-tags hidden";
         container.setAttribute("data-taggerator-for", boxId);
         label.appendChild(container);
+
+        // Search box: filters nothing out, it tints chips green in proportion
+        // to how closely they match. Lives outside the container so
+        // renderTags() can rebuild the chips without destroying it.
+        var search = document.createElement("input");
+        search.type = "search";
+        search.className = "taggerator-search hidden";
+        search.placeholder = "Search tags\u2026";
+        search.setAttribute("aria-label", "Search tags");
+        label.insertBefore(search, container);
+        container._taggeratorSearch = search;
+        container._taggeratorQuery = "";
+        search.addEventListener("input", function () {
+            container._taggeratorQuery = search.value;
+            renderTags(textarea, container);
+        });
+        search.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                search.value = "";
+                container._taggeratorQuery = "";
+                renderTags(textarea, container);
+            }
+            e.stopPropagation();
+        });
 
         container.addEventListener("dragstart", function (e) {
             var chip = chipFromEvent(e);
