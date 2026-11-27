@@ -17,7 +17,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 9px;
+    padding: 4px 9px;
     border-radius: 10px;
     font-size: 12px;
     line-height: 1.4;
@@ -39,16 +39,29 @@
     opacity: 0.65;
 }
 
-.taggerator-search-input {
+/* Gradio/WebUI ships global rules for input[type="text"] (padding, min-height,
+   white background, border) that outrank a plain class selector, which made
+   this render as a tall white box inside the pill. Match the chip's height and
+   neutralise those inherited styles with !important. */
+.taggerator-tags .taggerator-search-input,
+.taggerator-search .taggerator-search-input {
     width: 64px;
     min-width: 0;
-    padding: 0;
-    margin: 0;
-    border: 0;
-    outline: none;
-    background: transparent;
-    color: inherit;
-    font: inherit;
+    height: 1.4em !important;
+    min-height: 0 !important;
+    max-height: 1.4em !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    font: inherit !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
     appearance: none;
     -webkit-appearance: none;
 }
@@ -135,13 +148,21 @@
 .taggerator-chip-edit {
     width: 14ch;
     max-width: 100%;
-    padding: 0;
-    margin: 0;
-    border: 0;
-    outline: none;
-    background: transparent;
-    color: inherit;
-    font: inherit;
+    height: 1.4em !important;
+    min-height: 0 !important;
+    max-height: 1.4em !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    font: inherit !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
     appearance: none;
     -webkit-appearance: none;
 }
