@@ -26,6 +26,7 @@ Inspired by the tag-reordering feature of [sd-webui-prompt-all-in-one](https://g
 - Bracket-aware splitting: `(a, b)`, `[a|b]`, `{a, b}`, `<lora:name:0.8>` are each kept intact as a single tag
 - `BREAK` is always its own chip, even without commas — `a BREAK b` and `a BREAK b` typed on separate lines split into `a`, `BREAK`, `b` (lookalikes like `BREAKFAST` are left alone)
 - Trailing commas are ignored — `1girl, land,` shows two chips, and the comma is kept if you reorder (it's a habit worth preserving)
+- Chips appear from the very first tag — a single-tag prompt like `test,` shows its chip immediately, so short negatives don't look broken
 - **Enter-separated lines keep their line breaks** — if your prompt has returns in it, like `1girl,\n solo,\n 1boy`, reordering, weighting or deleting chips leaves the lines as they were (each tag stays on its own line) instead of bunching the whole prompt up into one line. Same for `a\nBREAK\nb` — the breaks around the BREAK survive
 - Keeps prompts tidy: after a reorder, tags are trimmed and rejoined with a single space on each line, so the prompt always reads `tag1, tag2, tag3` on one line, `tag4, tag5` on the next
 - Pure frontend — no Python, no settings, nothing to break

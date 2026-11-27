@@ -323,7 +323,10 @@
         var caretPos = restoreSearch ? searchInputEl.selectionStart : 0;
         container.replaceChildren();
         var searchEl = container._taggeratorSearch;
-        if (text.trim() === "" || parts.length < 2 || meaningful < 2) {
+        // Show the row from the very first tag. Requiring two made a
+        // single-tag prompt (common in negatives) look broken: nothing
+        // appeared until a second tag was typed.
+        if (text.trim() === "" || meaningful < 1) {
             container.classList.add("hidden");
             if (searchEl) searchEl.classList.add("hidden");
             return;
@@ -425,7 +428,8 @@
         for (var i = 1; i < parts.length; i++) {
             out += (nl[i - 1] ? ",\n" : ", ") + parts[i];
         }
-        textarea.value = hasTrailingComma ? out + "," : out;
+        // Deleting the last tag must leave an empty prompt, not a lone comma.
+        textarea.value = hasTrailingComma && out !== "" ? out + "," : out;
         fireInput(textarea);
         renderTags(textarea, container);
         markSynced(textarea, textarea.value);
